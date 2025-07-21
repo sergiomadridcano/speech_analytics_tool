@@ -1,0 +1,56 @@
+
+Executive Summary – Automated Audio Transcription System with Vosk
+
+This Python script enables the automatic transcription of audio files from a user-selected folder, generating a `.docx` document with the results. 
+Its main purpose is to streamline and automate the review and documentation of calls, interviews, or recordings, especially in professional or 
+compliance-driven environments.
+
+Technologies and Libraries Used:
+
+- Language: Python 3
+- Graphical Interface: tkinter for folder selection
+- Audio Handling:
+  - pydub for audio conversion and normalization
+  - wave for reading WAV files
+- Speech Recognition:
+  - vosk (offline model in Spanish, via KaldiRecognizer)
+- Data Processing:
+  - json and time for result parsing and metrics
+- Document Generation:
+  - python-docx to create Word reports
+- Other:
+  - os and datetime for file and timestamp management
+
+Main Features:
+
+1. Folder Selection:
+   Prompts the user to select a folder containing the audio files to be processed.
+
+2. Format Conversion:
+   Converts .mp3, .wav, .gsm, and .aac files to WAV mono 16kHz PCM format, which is required by Vosk.
+
+3. Offline Transcription:
+   Uses the Vosk speech recognition engine with a local Spanish model to transcribe audio into text without an internet connection.
+
+4. Automated Report Generation:
+   Creates a `.docx` document including:
+   - Filename
+   - Audio duration
+   - Transcription time
+   - Full transcribed text
+
+5. Automatic Cleanup:
+   Deletes temporary `.wav` files generated during conversion (if they were not the original format).
+
+Potential Use Cases:
+
+- Mass call processing in call centers
+- Transcription of journalistic or academic interviews
+- Review of audio evidence in legal contexts
+- Audio documentation in monitoring systems
+
+Prerequisites:
+
+- Vosk Spanish model installed in ~/.vosk/models/es
+- Dependencies installed via `pip install pydub vosk python-docx`
+- FFMPEG properly configured if processing non-WAV formats
