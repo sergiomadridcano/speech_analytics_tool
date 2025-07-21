@@ -1,0 +1,128 @@
+import os
+import tkinter as tk
+from tkinter import filedialog
+from datetime import datetime
+from pydub import AudioSegment
+import wave
+import json
+import time
+from vosk import Model, KaldiRecognizer
+from docx import Document
+
+# === Selección de carpeta ===
+def seleccionar_carpeta():
+    root = tk.Tk()
+    root.withdraw()
+    carpeta = filedialog.askdirectory(title="Selecciona la carpeta con audios")
+    return carpeta
+
+# === Conversión a WAV mono PCM ===
+def convertir_a_wav(archivo):
+    nombre, ext = os.path.splitext(archivo)
+    ext = ext.lower()
+    nuevo_archivo = nombre + "_convertido.wav"
+
+    try:
+        if ext == ".wav":
+            audio = AudioSegment.from_wav(archivo)
+        elif ext == ".mp3":
+            audio = AudioSegment.from_mp3(archivo)
+        elif ext == ".gsm":
+            audio = AudioSegment.from_file(archivo, format="gsm")
+        elif ext == ".aac":
+            audio = AudioSegment.from_file(archivo, format="aac")
+        else:
+            return None
+
+        audio = audio.set_channels(1).set_frame_rate(16000)
+        audio.export(nuevo_archivo, format="wav")
+        return nuevo_archivo
+    except Exception as e:
+        print(f"❌ Error al convertir {archivo}: {e}")
+        return None
+
+# === Transcripción con Vosk ===
+def transcribir_audio(archivo_wav):
+    try:
+        wf = wave.open(archivo_wav, "rb")
+        if wf.getnchannels() != 1 or wf.getsampwidth() != 2 or wf.getcomptype() != "NONE":
+            return "[ERROR]: Audio debe estar en formato mono WAV PCM.", 0
+
+        model_path = os.path.expanduser("~/.vosk/models/es")
+        if not os.path.exists(model_path):
+            return "[ERROR]: Modelo de Vosk en español no encontrado.", 0
+
+        model = Model(model_path)
+        rec = KaldiRecognizer(model, wf.getframerate())
+
+        texto_completo = ""
+        inicio = time.time()
+        while True:
+            data = wf.readframes(4000)
+            if len(data) == 0:
+                break
+            if rec.AcceptWaveform(data):
+                resultado = json.loads(rec.Result())
+                texto_completo += resultado.get("text", "") + " "
+        final = json.loads(rec.FinalResult())
+        texto_completo += final.get("text", "")
+        fin = time.time()
+        duracion = fin - inicio
+        return texto_completo.strip(), duracion
+
+    except Exception as e:
+        return f"[ERROR al transcribir con Vosk]: {e}", 0
+
+# === Análisis de carpeta ===
+def analizar_carpeta(carpeta):
+    extensiones_validas = [".mp3", ".wav", ".gsm", ".aac"]
+    archivos = [f for f in os.listdir(carpeta) if os.path.splitext(f)[1].lower() in extensiones_validas]
+
+    if not archivos:
+        print("❌ No se encontraron archivos de audio.")
+        return
+
+    doc = Document()
+    doc.add_heading("Transcripción de Audios", level=1)
+
+    for archivo in archivos:
+        ruta_completa = os.path.join(carpeta, archivo)
+        print(f"🎧 Procesando: {archivo}")
+        wav_path = convertir_a_wav(ruta_completa)
+
+        doc.add_heading(f"Archivo: {archivo}", level=2)
+
+        if not wav_path:
+            doc.add_paragraph("❌ Archivo corrupto o ilegible. No se pudo convertir.")
+            doc.add_paragraph("")
+            continue
+
+        try:
+            audio = AudioSegment.from_wav(wav_path)
+            duracion_audio = round(len(audio) / 1000, 2)
+        except Exception:
+            duracion_audio = "Desconocida"
+
+        texto, duracion_transcripcion = transcribir_audio(wav_path)
+        duracion_transcripcion = round(duracion_transcripcion, 2)
+
+        doc.add_paragraph(f" Duración del audio: {duracion_audio} segundos")
+        doc.add_paragraph(f" Tiempo de transcripción: {duracion_transcripcion} segundos")
+        doc.add_paragraph(texto)
+        doc.add_paragraph("")
+
+        if wav_path != ruta_completa and os.path.exists(wav_path):
+            os.remove(wav_path)
+
+    fecha = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    output_path = os.path.join(carpeta, f"{fecha}_transcripcion.docx")
+    doc.save(output_path)
+    print(f"Transcripción guardada en: {output_path}")
+
+# === Ejecutar ===
+if __name__ == "__main__":
+    carpeta = seleccionar_carpeta()
+    if carpeta:
+        analizar_carpeta(carpeta)
+    else:
+        print("No se seleccionó ninguna carpeta.")
