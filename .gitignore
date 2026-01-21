@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+outputs/
+data/
+*.wav
+*.mp3
+*.m4a
+*.gsm
+.env
+*.json

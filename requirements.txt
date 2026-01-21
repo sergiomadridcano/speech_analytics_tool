@@ -1,0 +1,25 @@
+# ============================================================================
+# ANÁLISIS DE VOZ - Transcripción Automática de Audios con Whisper
+# ============================================================================
+# Dependencias de Python para la herramienta de transcripción de audios
+# Ejecuta: pip install -r requirements.txt
+# ============================================================================
+
+# Reconocimiento de voz con IA (OpenAI Whisper optimizado)
+# Transcripción de alta precisión, multiidioma, muy eficiente
+faster-whisper==1.0.3
+
+# Procesamiento y conversión de archivos de audio
+# Convierte múltiples formatos (MP3, M4A, AAC, etc.) a WAV usando FFmpeg
+pydub==0.25.1
+
+# Generación de documentos Word (.docx)
+# Exporta las transcripciones en formato Office Document
+python-docx==0.8.11
+
+# ============================================================================
+# REQUISITOS ADICIONALES (no pip):
+# - Python 3.8+
+# - FFmpeg (instalación: ver README.md)
+# - CUDA Toolkit 12.x (opcional, para aceleración GPU con Nvidia)
+# ============================================================================
